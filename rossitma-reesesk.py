@@ -9,7 +9,9 @@ import networkx as nx
 # The following lines must appear at the beginning for graph drawing to work
 # Do not touch them
 import matplotlib
+import pygeoip
 matplotlib.use('Agg')
+from collections import Counter
 
 # The following line imports Matplotlib so that you can draw a graph
 import pylab as plt
@@ -17,9 +19,22 @@ import pylab as plt
 # The following is needed to take arguments from command line
 import sys
 
+GEOIP = pygeoip.GeoIP("/scratch/reesesk/GeoIP.dat", pygeoip.MEMORY_CACHE)
+
 def load_and_display_file():
-    graph1 = nx.read_graphml('small-bitcoingraph.graphml')
-    return graph1
+    graph1 = nx.read_graphml('full-bitcoin.graphml')
+    return graph1.to_undirected()
+
+
+country_cache = {}
+def ip_to_country(ip):
+    if ip in country_cache:
+        return country_cache[ip]
+    country = GEOIP.country_name_by_addr(ip)
+    if country is None:
+        country = "Unknown"
+    country_cache[ip] = country
+    return country
 
 
 def main():
@@ -65,26 +80,21 @@ def main():
     print("Which node(s) has the smallest degree, and what is that degree?")
     print("The following nodes have the smallest degree: " + str(nodes_smallest_degree) + " with a degree of " + str(min_degree))
 
-
-    #Question 5 Top 10 nodes by degree
     degrees = dict(graph1.degree())
-    top_10_nodes = sorted(degrees.items(), key=lambda x: x[1], reverse=True)[:10]
+    #Question 5 Top 10 nodes by degree
+    country_map = {n: ip_to_country(n) for n in all_nodes}
 
-    print("What are the top 10 nodes by degree?")
-    for node, deg in top_10_nodes:
-        ip = graph1.nodes[node].get('ip', 'N/A')
-        country = graph1.nodes[node].get('country', 'N/A')
-        print(f"IP: {ip}, Degree: {deg}, Country: {country}")
+    top_10 = sorted(degrees.items(), key=lambda x: x[1], reverse=True)[:10]
+    print("Top 10 nodes by degree:")
+    for ip, deg in top_10:
+        print(f"IP: {ip}, Degree: {deg}, Country: {country_map[ip]}")
 
 
     #Question 6 top 5 countries by # of nodes
-    from collections import Counter
-    countries = [graph1.nodes[n].get('country', 'N/A') for n in graph1.nodes()]
-    country_counts = Counter(countries)
-    top_5_countries = country_counts.most_common(5)
-
-    print("What are the top 5 countries by number of nodes?")
-    for country, count in top_5_countries:
+    countries = list(country_map.values())
+    top_countries = Counter(countries).most_common(5)
+    print("Top 5 countries by number of nodes:")
+    for country, count in top_countries:
         print(f"{country}: {count}")
 
 if __name__ == "__main__":
