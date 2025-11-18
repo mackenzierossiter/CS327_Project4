@@ -4,6 +4,7 @@
 
 #!/usr/bin/python
 import networkx as nx
+import sys
 
 #
 # The following lines must appear at the beginning for graph drawing to work
@@ -19,10 +20,15 @@ import pylab as plt
 # The following is needed to take arguments from command line
 import sys
 
-GEOIP = pygeoip.GeoIP("/scratch/reesesk/GeoIP.dat", pygeoip.MEMORY_CACHE)
+graphFileName = sys.argv[1]
+pathToGeo     = sys.argv[2]
+
+print("graphFileName = " + graphFileName)
+print("pthTOGeo = " + pathToGeo)
+GEOIP = pygeoip.GeoIP(pathToGeo, pygeoip.MEMORY_CACHE)
 
 def load_and_display_file():
-    graph1 = nx.read_graphml('full-bitcoin.graphml')
+    graph1 = nx.read_graphml(graphFileName)
     return graph1.to_undirected()
 
 
@@ -38,20 +44,25 @@ def ip_to_country(ip):
 
 
 def main():
+    
+
     graph1 = load_and_display_file()
 
     # question 1 total nodes
+    print("\n")
     all_nodes = graph1.nodes()
     print("How many bitcoin nodes does the bitcoin network in the data file have?")
     print(len(all_nodes))
 
 
     # question 2 total edges
+    print("\n")
     all_edges = graph1.edges()
     print("How many bitcoin edges does the bitcoin network in the data file have?")
     print(len(all_edges))
 
     #Question 3 highest degree node
+    print("\n")
     max_degree = 0
     for node in all_nodes:
         if graph1.degree(node) > max_degree:
@@ -66,6 +77,7 @@ def main():
 
 
     #Question 4 Smallest node degree
+    print("\n")
     all_nodes = list(graph1.nodes())
     min_degree = graph1.degree(all_nodes[0])
     for node in all_nodes:
@@ -81,7 +93,12 @@ def main():
     print("The following nodes have the smallest degree: " + str(nodes_smallest_degree) + " with a degree of " + str(min_degree))
 
     degrees = dict(graph1.degree())
+
+    
+
+    print("\n")
     #Question 5 Top 10 nodes by degree
+    print("\n")
     country_map = {n: ip_to_country(n) for n in all_nodes}
 
     top_10 = sorted(degrees.items(), key=lambda x: x[1], reverse=True)[:10]
@@ -90,7 +107,9 @@ def main():
         print(f"IP: {ip}, Degree: {deg}, Country: {country_map[ip]}")
 
 
+
     #Question 6 top 5 countries by # of nodes
+    print("\n")
     countries = list(country_map.values())
     top_countries = Counter(countries).most_common(5)
     print("Top 5 countries by number of nodes:")
